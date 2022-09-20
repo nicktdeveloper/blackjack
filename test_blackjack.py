@@ -4,6 +4,7 @@ import unittest
 import card
 import shoe
 import hand
+import player
 
 class TestEmployee(unittest.TestCase):
     """ Main testing class """
@@ -20,20 +21,28 @@ class TestEmployee(unittest.TestCase):
         self.card2 = card.Card('K', 'clubs', 10)
         self.card3 = card.Card('A', 'hearts', 11)
         self.card4 = card.Card('7', 'diamonds', 7)
+        
         self.shoe1 = shoe.Shoe(1)
         self.shoe2 = shoe.Shoe(2)
         self.shoe3 = shoe.Shoe(6)
 
-        self.hand1 = hand.Hand(100)
+        self.player1 = player.Player(1, 1000)
+        self.player2 = player.Player(2, 500)
+        self.player3 = player.Player(3, 2500)
+
+        self.hand1 = hand.Hand(self.player1)
+        self.hand1.place_bet(5)
         self.hand1.hit(self.card1)
         self.hand1.hit(self.card2)
 
-        self.hand2 = hand.Hand(100)
+        self.hand2 = hand.Hand(self.player2)
+        self.hand2.place_bet(10)
         self.hand2.hit(self.card1)
         self.hand2.hit(self.card2)
         self.hand2.hit(self.card3)
 
-        self.hand3 = hand.Hand(100)
+        self.hand3 = hand.Hand(self.player3)
+        self.hand3.place_bet(15)
         self.hand3.hit(self.card1)
         self.hand3.hit(self.card3)
         self.hand3.hit(self.card4)
@@ -90,6 +99,17 @@ class TestEmployee(unittest.TestCase):
         self.assertEqual(self.hand1.get_hand_value(), 21)
         self.assertEqual(self.hand2.get_hand_value(), 12)
         self.assertEqual(self.hand3.get_hand_value(), 19)
+
+    def test_hand_place_bet(self):
+        """ Test whether the place bet function works """
+        self.assertEqual(self.hand1.bet, 5)
+        self.assertEqual(self.hand2.bet, 10)
+        self.assertEqual(self.hand3.bet, 15)
+
+        # test double down function
+        self.hand1.double_down(self.card4)
+
+        self.assertEqual(self.hand1.bet, 10)
 
 if __name__ == '__main__':
     unittest.main()
