@@ -36,6 +36,10 @@ class Hand:
         self.hit(card)
         self.stand()
 
+    def split(self):
+        """ Splits the hand only if the cards of matching pip value """
+        pass
+
     def stand(self):
         """ Changes stand status to true """
         self.stand_status = True
@@ -62,3 +66,15 @@ class Hand:
     def get_hand_value(self):
         """ Returns the hands value """
         return self.value
+
+    def check_bust(self):
+        """ Checks whether the hand has busted """
+        if self.value > 21:
+            self.bust_status = True
+            return True
+        else:
+            return False
+
+    def check_blackjack(self):
+        """ Check whether the hand is a natural blackjack """
+        return len(self.cards) == 2 and self.value == 21

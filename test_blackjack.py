@@ -21,7 +21,7 @@ class TestEmployee(unittest.TestCase):
         self.card2 = card.Card('K', 'clubs', 10)
         self.card3 = card.Card('A', 'hearts', 11)
         self.card4 = card.Card('7', 'diamonds', 7)
-        
+
         self.shoe1 = shoe.Shoe(1)
         self.shoe2 = shoe.Shoe(2)
         self.shoe3 = shoe.Shoe(6)
@@ -46,6 +46,13 @@ class TestEmployee(unittest.TestCase):
         self.hand3.hit(self.card1)
         self.hand3.hit(self.card3)
         self.hand3.hit(self.card4)
+
+        self.hand4 = hand.Hand(self.player1)
+        self.hand4.place_bet(20)
+        self.hand4.hit(self.card2)
+        self.hand4.hit(self.card2)
+        self.hand4.hit(self.card3)
+        self.hand4.hit(self.card4)
 
     def tearDown(self):
         pass
@@ -99,6 +106,7 @@ class TestEmployee(unittest.TestCase):
         self.assertEqual(self.hand1.get_hand_value(), 21)
         self.assertEqual(self.hand2.get_hand_value(), 12)
         self.assertEqual(self.hand3.get_hand_value(), 19)
+        self.assertEqual(self.hand4.get_hand_value(), 28)
 
     def test_hand_place_bet(self):
         """ Test whether the place bet function works """
@@ -108,8 +116,21 @@ class TestEmployee(unittest.TestCase):
 
         # test double down function
         self.hand1.double_down(self.card4)
-
         self.assertEqual(self.hand1.bet, 10)
+    
+    def test_hand_check_bust(self):
+        """ Tests whether the bust check function works """
+        self.assertFalse(self.hand1.check_bust())
+        self.assertFalse(self.hand2.check_bust())
+        self.assertFalse(self.hand3.check_bust())
+        self.assertTrue(self.hand4.check_bust())
+
+    def test_hand_check_blackjack(self):
+        """ Test whether the check blackjack function works """
+        self.assertTrue(self.hand1.check_blackjack())
+        self.assertFalse(self.hand2.check_blackjack())
+        self.assertFalse(self.hand3.check_blackjack())
+        self.assertFalse(self.hand4.check_blackjack())
 
 if __name__ == '__main__':
     unittest.main()
