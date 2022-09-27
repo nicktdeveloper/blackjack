@@ -26,9 +26,9 @@ class TestEmployee(unittest.TestCase):
         self.shoe2 = shoe.Shoe(2)
         self.shoe3 = shoe.Shoe(6)
 
-        self.player1 = player.Player(1, 1000)
-        self.player2 = player.Player(2, 500)
-        self.player3 = player.Player(3, 2500)
+        self.player1 = player.Player(1000, "Andy")
+        self.player2 = player.Player(500, "Bob")
+        self.player3 = player.Player(2500, "Cat")
 
         self.hand1 = hand.Hand(self.player1)
         self.hand1.place_bet(5)
@@ -53,6 +53,11 @@ class TestEmployee(unittest.TestCase):
         self.hand4.hit(self.card2)
         self.hand4.hit(self.card3)
         self.hand4.hit(self.card4)
+
+        self.hand5 = hand.Hand(self.player1)
+        self.hand5.place_bet(20)
+        self.hand5.hit(self.card1)
+        self.hand5.hit(self.card3)
 
     def tearDown(self):
         pass
@@ -117,7 +122,7 @@ class TestEmployee(unittest.TestCase):
         # test double down function
         self.hand1.double_down(self.card4)
         self.assertEqual(self.hand1.bet, 10)
-    
+
     def test_hand_check_bust(self):
         """ Tests whether the bust check function works """
         self.assertFalse(self.hand1.check_bust())
@@ -131,6 +136,23 @@ class TestEmployee(unittest.TestCase):
         self.assertFalse(self.hand2.check_blackjack())
         self.assertFalse(self.hand3.check_blackjack())
         self.assertFalse(self.hand4.check_blackjack())
+
+    def test_hand_check_split(self):
+        """ Test whether the check split function works """
+        self.assertFalse(self.hand1.check_split())
+        self.assertFalse(self.hand2.check_split())
+        self.assertFalse(self.hand3.check_split())
+        self.assertFalse(self.hand4.check_split())
+        self.assertTrue(self.hand5.check_split())
+
+    def test_hand_split(self):
+        """ Test whether the split function works """
+        self.assertEqual(self.hand5.split(), self.card3)
+        self.assertEqual(self.hand5.cards[0], self.card1)
+
+    def test_game_deal(self):
+        """ Test to ensure deal function works properly """
+        pass
 
 if __name__ == '__main__':
     unittest.main()

@@ -3,6 +3,7 @@
 class Player:
     """ The player class """
 
-    def __init__(self, order: 'int', bankroll: 'int'):
-        self.order = order
+    def __init__(self, bankroll: 'int', name: 'str'):
+        self.starting_bankroll = bankroll
         self.bankroll = bankroll
+        self.name = name

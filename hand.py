@@ -37,8 +37,10 @@ class Hand:
         self.stand()
 
     def split(self):
-        """ Splits the hand only if the cards of matching pip value """
-        pass
+        """ Splits the hand if cards are of matching pip value """
+        # Returns the card to be added to the new hand
+        if self.check_split():
+            return self.cards.pop()
 
     def stand(self):
         """ Changes stand status to true """
@@ -55,13 +57,16 @@ class Hand:
 
         # sum up all non-aces
         total = sum(non_aces_values)
-        total_max = total + num_aces + 10
-        total_min = total + num_aces
+        self.value = total
 
-        if total_max <= 21:
-            self.value = total_max
-        else:
-            self.value = total_min
+        if num_aces > 0:
+            total_max = total + num_aces + 10
+            total_min = total + num_aces
+
+            if total_max <= 21:
+                self.value = total_max
+            else:
+                self.value = total_min
 
     def get_hand_value(self):
         """ Returns the hands value """
@@ -70,10 +75,19 @@ class Hand:
     def check_bust(self):
         """ Checks whether the hand has busted """
         if self.value > 21:
-            self.bust_status = True
+            self.stand_status = True
+            self.settled_status = True
             return True
         else:
             return False
+
+    def check_doubledown(self):
+        """ Checks whether the hand can double down """
+        return len(self.cards) == 2
+
+    def check_split(self):
+        """ Checks if the hand can be split """
+        return (len(self.cards) == 2) and (self.cards[0].pip_value == self.cards[1].pip_value)
 
     def check_blackjack(self):
         """ Check whether the hand is a natural blackjack """
