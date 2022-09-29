@@ -17,17 +17,27 @@ class Game:
         self.players = []
         self.hands = []
         self.dealer = PlayerModule.Player(1000000, "Dealer")
-        self.shoe = shoe.Shoe(6)
+        self.num_decks = 6
+        self.shoe = shoe.Shoe(self.num_decks)
         self.round_active = True
+        self.player_stats = {}
         self.setup_game()
 
     def setup_game(self):
         """ Function to initialize a game """
         # currently assumes only 1 player will be playing
-
         # bankroll = int(input('How much money will you be playing with today? '))
         bankroll = 1000
         self.players.append(PlayerModule.Player(bankroll, "Nick"))
+
+        # set up player stats:
+        for player in self.players:
+            self.player_stats[player.name] = {
+                'wins': 0,
+                'losses': 0,
+                'pushes': 0,
+                'games_played': 0
+            }
 
     def setup_round(self):
         """ Function to get the round setup """
@@ -35,6 +45,15 @@ class Game:
         self.round_active = True
         self.hands = []
 
+    def check_reshuffle(self):
+        """ Function to determine if shoe needs to be reshuffled """
+        if self.shoe.cards_left() <= self.shoe.cutoff:
+            
+            self.print_header("Shuffle", "*")
+            print(Fore.BLUE + "The shoe will be reshuffled")
+            print("")
+            self.shoe = shoe.Shoe(self.num_decks)
+    
     def deal_cards(self):
         """ Function to deal cards to all players """
 
@@ -144,32 +163,100 @@ class Game:
 
         self.print_header("Player Turns", "-")
 
-        for hand in self.hands[:-1]:
-            if not hand.settled_status:
-                self.print_header(f"{hand.player.name.upper()}'s Turn", "+")
-                print(f"{hand.player.name} has {hand.get_hand_value()}")
-                print(f"(Dealer is showing a {self.hands[-1].cards[0].pip_value})")
-                print("")
-
-                while not hand.stand_status:
-                    answer = input("Hit [1] or stand [2]? ")
-                    if (answer != '1') and (answer != '2'):
-                        print("Please input a valid response (1 or 2)")
-                    if answer == '1':
-                        card_to_hit = self.shoe.deal_card()
-                        print(f"{hand.player.name} is dealt {card_to_hit.card_name()}")
-                        hand.hit(card_to_hit)
-                        print(f"{hand.player.name} has {hand.get_hand_value()}")
-                    elif answer == '2':
-                        print(f"{hand.player.name} has chosen to stand.")
-                        hand.stand()
-
-                    if hand.check_bust():
-                        print(Fore.RED + "This hand has busted!")
-
+        for i, hand in enumerate(self.hands):
+            if hand.player.name != "Dealer":
+                if not hand.settled_status:
+                    self.print_header(f"{hand.player.name.upper()}'s Turn", "+")
+                    print(f"{hand.player.name} has {hand.get_hand_value()}")
+                    print(f"(Dealer is showing a {self.hands[-1].cards[0].pip_value})")
                     print("")
 
-                print(f"{hand.player.name}'s turn has ended.")
+                    while not hand.stand_status:
+                        if hand.check_split():
+                            self.player_option_1(hand, i)
+                        elif hand.check_doubledown():
+                            self.player_option_2(hand)
+                        else:
+                            self.player_option_3(hand)
+
+                        if hand.check_bust():
+                            print(Fore.RED + "This hand has busted!")
+
+                        print("")
+
+                    print(f"{hand.player.name}'s turn has ended.")
+    
+    def player_option_1(self, hand, idx):
+        """ Function if player can split or double """
+        answer = input("Hit [1], stand [2], double down [3], or split [4]? ")
+        if answer not in ['1', '2', '3', '4']:
+            print("Please input a valid response (1, 2, 3, or 4)")
+        if answer == '1':
+            self.option_hit(hand)
+        elif answer == '2':
+            self.option_stand(hand)
+        elif answer == '3':
+            self.option_double(hand)
+        elif answer == '4':
+            self.option_split(hand, idx)
+
+    def player_option_2(self, hand):
+        """ Function if player can double but not split """
+        answer = input("Hit [1], stand [2], or double down [3]? ")
+        if answer not in ['1', '2', '3']:
+            print("Please input a valid response (1, 2, or 3)")
+        if answer == '1':
+            self.option_hit(hand)
+        elif answer == '2':
+            self.option_stand(hand)
+        elif answer == '3':
+            self.option_double(hand)
+    
+    def player_option_3(self, hand):
+        """ Function if player can't split or double """
+        answer = input("Hit [1] or stand [2]? ")
+        if answer not in ['1', '2']:
+            print("Please input a valid response (1 or 2)")
+        if answer == '1':
+            self.option_hit(hand)
+        elif answer == '2':
+            self.option_stand(hand)
+    
+    def option_hit(self, hand):
+        """ Function if player decides to hit """
+        card_to_hit = self.shoe.deal_card()
+        print(f"{hand.player.name} is dealt {card_to_hit.card_name()}")
+        hand.hit(card_to_hit)
+        print(f"{hand.player.name} has {hand.get_hand_value()}")
+
+    def option_stand(self, hand):
+        """ Function if player decides to stand """
+        print(f"{hand.player.name} has chosen to stand.")
+        hand.stand()
+
+    def option_double(self, hand):
+        """ Function if player decides to double """
+        card_to_hit = self.shoe.deal_card()
+        print(f"{hand.player.name} doubles down (bets additional ${hand.bet})")
+        print(f"{hand.player.name} is dealt {card_to_hit.card_name()}")
+        hand.double_down(card_to_hit)
+        print(f"{hand.player.name} has {hand.get_hand_value()}")
+
+    def option_split(self, hand, idx):
+        """ Function if player decides to split """
+        print(f"{hand.player.name} elects to split")
+        
+        # run split function, obtain card to split
+        card_to_split = hand.split()
+
+        # initiate new hand, with same bet value
+        new_hand = HandModule.Hand(hand.player)
+        new_hand.place_bet(hand.bet)
+        new_hand.hit(card_to_split)
+
+        # insert the new hand into the hands array
+        self.hands.insert(idx + 1, new_hand)
+        print(f"{hand.player.name} has {hand.get_hand_value()}")
 
     def dealers_turn(self):
         """ Function to execute the dealer's turn """
@@ -242,21 +329,24 @@ class Game:
         for hand in self.hands[:-1]:
             if not hand.settled_status:
                 player_score = hand.get_hand_value()
-                print(f"Player score is {player_score}")
+                print(f"{hand.player.name} score is {player_score}")
 
                 # player wins
                 if dealer_score > 21 or player_score > dealer_score:
                     print(Fore.GREEN + f'{hand.player.name} wins ${hand.bet}.')
                     hand.player.bankroll += hand.bet * 2
+                    self.player_stats[hand.player.name]['wins'] += 1
 
                 # dealer wins
                 elif dealer_score > player_score:
                     print(Fore.RED + f'{hand.player.name} loses.')
+                    self.player_stats[hand.player.name]['losses'] += 1
 
                 # push
                 else:
-                    print(f'{hand.player.name} pushes.')
+                    print(Fore.YELLOW + f'{hand.player.name} pushes.')
                     hand.player.bankroll += hand.bet
+                    self.player_stats[hand.player.name]['pushes'] += 1
 
                 # change hand status to settled
                 hand.settled_status = True
@@ -264,6 +354,31 @@ class Game:
         # mark the round as over
         self.round_active = False
 
+    def stats_readout(self):
+        """ Prints out how each player is performing """
+        self.print_header("Recap", "-")
+        
+        # iterate through all players
+        for player in self.players:
+
+            stats = self.player_stats[player.name]
+            wins = stats['wins']
+            losses = stats['losses']
+            pushes = stats['pushes']
+
+            # calculate their win %
+            try:
+                win_pct = stats['wins'] / stats['games_played'] * 100
+            except:
+                win_pct = 0
+            
+            # calculate how much they've netted and the %
+            net_amt = player.bankroll - player.starting_bankroll
+            net_pct = net_amt / player.starting_bankroll * 100
+
+            # print out their stats
+            print(f"{player.name}: {wins}-{losses}-{pushes}")
+    
     def print_header(self, string, char):
         """ Prints a header with the given string and character """
 
@@ -301,14 +416,17 @@ class Game:
 
         while keep_playing:
             self.print_header(f"Round {i}", "#")
+            self.stats_readout()
             self.play_round()
+            self.check_reshuffle()
 
-            answer = input("Would you like to continue playing (Y/N)? ")
+            print("")
+            answer = input("Would you like to continue playing (y/n)? ")
 
-            if answer == "Y":
+            if answer in ['Y', 'y', 'yes', 'Yes']:
                 os.system('clear')
                 i += 1
-            elif answer == "N":
+            elif answer in ['N', 'n', 'no', 'No']:
                 keep_playing = False
 
 game = Game()

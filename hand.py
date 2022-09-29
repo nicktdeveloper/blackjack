@@ -4,7 +4,7 @@
 class Hand:
     """ The hand class """
 
-    def __init__(self, player: 'player'):
+    def __init__(self, player):
         self.cards = []
         self.value = 0
         self.bet = 0
@@ -39,8 +39,13 @@ class Hand:
     def split(self):
         """ Splits the hand if cards are of matching pip value """
         # Returns the card to be added to the new hand
-        if self.check_split():
-            return self.cards.pop()
+        card_to_split = self.cards.pop()
+
+        # recalculates the hands value after splitting
+        self.calc_value()
+
+        return card_to_split
+
 
     def stand(self):
         """ Changes stand status to true """
